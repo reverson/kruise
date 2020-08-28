@@ -135,10 +135,11 @@ func UpdateStorage(cs *appsv1alpha1.CloneSet, pod *v1.Pod) {
 // by getPersistentVolumeClaimName.
 func GetPersistentVolumeClaims(cs *appsv1alpha1.CloneSet, pod *v1.Pod) map[string]v1.PersistentVolumeClaim {
 	templates := cs.Spec.VolumeClaimTemplates
+	podInstanceID := pod.Labels[appsv1alpha1.CloneSetInstanceID]
 	claims := make(map[string]v1.PersistentVolumeClaim, len(templates))
 	for i := range templates {
 		claim := templates[i]
-		claim.Name = getPersistentVolumeClaimName(cs, &claim, pod.Labels[appsv1alpha1.CloneSetInstanceID])
+		claim.Name = getPersistentVolumeClaimName(cs, &claim, podInstanceID)
 		claim.Namespace = cs.Namespace
 		if claim.Labels == nil {
 			claim.Labels = make(map[string]string)
@@ -146,7 +147,7 @@ func GetPersistentVolumeClaims(cs *appsv1alpha1.CloneSet, pod *v1.Pod) map[strin
 		for k, v := range cs.Spec.Selector.MatchLabels {
 			claim.Labels[k] = v
 		}
-		claim.Labels[appsv1alpha1.CloneSetInstanceID] = pod.Labels[appsv1alpha1.CloneSetInstanceID]
+		claim.Labels[appsv1alpha1.CloneSetInstanceID] = podInstanceID
 		if ref := metav1.GetControllerOf(pod); ref != nil {
 			claim.OwnerReferences = append(claim.OwnerReferences, *ref)
 		}
